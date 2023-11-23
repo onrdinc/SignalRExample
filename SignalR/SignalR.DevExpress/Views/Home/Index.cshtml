@@ -1,0 +1,43 @@
+@using SignalR_DevExpress.Models
+
+
+@(Html.DevExtreme().DataGrid()
+    .ID("gridContainer")
+    .Visible(false)
+    .ShowBorders(true)
+    .RepaintChangesOnly(true)
+    .HighlightChanges(true)
+
+)
+
+@*<script src="~/signalr/signalr-client.js"></script>*@
+<script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+<script>
+    var connection = new signalR.HubConnectionBuilder()
+        .withUrl("https://localhost:7294/MyHub")
+        .build();
+
+    $(function () {
+        connection.start()
+            .then(function () {
+                connection.invoke("GetData")
+              
+            });
+        $("#gridContainer").dxDataGrid({
+            visible: true,
+            columns: [
+                {dataField:'productName',caption:'adý'},
+                {dataField:'price',caption:'fiyat'},
+                {dataField:'date',caption:'tarih'},
+                {dataField:'openPrice',caption:'ilk fiyat'},
+            ]
+            
+        });
+
+        connection.on("GetAllProduct", function (data) {
+            console.log(data,'data2')
+
+            $("#gridContainer").dxDataGrid("instance").option("dataSource", data.result);
+        });
+    });
+</script>
