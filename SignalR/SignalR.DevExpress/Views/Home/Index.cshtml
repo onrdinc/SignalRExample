@@ -1,15 +1,76 @@
-@using SignalR_DevExpress.Models
+@using SignalR.DevExpress.Models
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+
+<style>
+    #gridContainer span.current-value {
+        display: inline-block;
+        margin-right: 5px;
+    }
+
+    #gridContainer span.diff {
+        width: 50px;
+        display: inline-block;
+    }
+
+    #gridContainer .inc {
+        color: #2ab71b;
+    }
+
+    #gridContainer .dec {
+        color: #f00;
+    }
+
+        #gridContainer .inc .arrow,
+        #gridContainer .dec .arrow {
+            display: inline-block;
+            height: 10px;
+            width: 10px;
+            background-repeat: no-repeat;
+            background-size: 10px 10px;
+        }
+
+    #gridContainer .inc .arrow {
+        background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAADKSURBVHjaYtTaLs1ABEiG0nPRJa56PEHhsxBhmCUQT4OyrwHxcXyKmQgYJgHE64CYDYrXQcXIMhCbAcgWkGzgNKh38QUB0QamIUUErkhKI9ZAGyCeTERkTYaqxWsgKA2txhdG6GGsvUNGGpeBRMUiGhCFGsqGzUBQQJsxkA5AemaiG5hDIBIIgQSgK0FmMDACs549kN5FZLjhA7+A2A2U9YSAOBeLAk4gnoBDczoOcSFGPIUDPxB/wCHHiKtwYGKgMhg1cBAaCBBgAJTUIL3ToPZfAAAAAElFTkSuQmCC');
+    }
+
+    #gridContainer .dec .arrow {
+        background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAADJSURBVHjaYvzPgBfgkhYA4o8QFahKmBioDEYNHIQGsgBxIBCLkqgvAYi/g1mMjMjir0EJzR6If/6HpChKMMgMe3DKBeIcKhiY8x/MYoDj+RQYNgdkGLqBbEB8kgzDToL1YjEQhKWB+BUJhj0H64Eahs1AELYhMpJ+gtUiGYbLQBBOI8LANLBaIg1kAAc0vkiAqSPBQFAkHcNi2DGoHMkGgrAENOCRI0ECRQ2JBoKwJTQCfkLZDPgMZPxPXN5NhtJzMSsJVBMAAgwAyWSY2svfmrwAAAAASUVORK5CYII=');
+    }
+</style>
 
 
-@(Html.DevExtreme().DataGrid()
+@(Html.DevExtreme().DataGrid<Product>()
     .ID("gridContainer")
     .Visible(false)
     .ShowBorders(true)
     .RepaintChangesOnly(true)
     .HighlightChanges(true)
+    .Columns(columns => {
+        columns.AddFor(m => m.ProductName).DataField("productName");
 
+        columns.AddFor(m => m.Price).DataField("price")
+            .Format("#0.####")
+            .CellTemplate(@<text>
+                <span class="<%- data.change > 0 ? 'inc' : 'dec' %>">
+                    <%- text %>
+                </span>
+            </text>);
+
+        columns.AddFor(m => m.Change).DataField("change")
+            .Width(140)
+            .Format("#0.####")
+            .CellTemplate(@<text>
+                <span class="<%- data.change > 0 ? 'inc' : 'dec' %>">
+                    <span class="current-value"><%- text %></span>
+                    <span class="arrow"></span>
+                    <span class="diff"><%- data.percentChange.toFixed(2) %>%</span>
+                </span>
+            </text>);
+
+        columns.AddFor(m => m.Date).DataField("date")
+            .Format("dd/mm/yyy");
+    })
 )
-
 @*<script src="~/signalr/signalr-client.js"></script>*@
 <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
 <script>
@@ -20,24 +81,71 @@
     $(function () {
         connection.start()
             .then(function () {
-                connection.invoke("GetData")
-              
+                connection.invoke("GetData");
             });
+
         $("#gridContainer").dxDataGrid({
             visible: true,
             columns: [
-                {dataField:'productName',caption:'adý'},
-                {dataField:'price',caption:'fiyat'},
-                {dataField:'date',caption:'tarih'},
-                {dataField:'openPrice',caption:'ilk fiyat'},
-            ]
-            
+                { dataField: 'productName', caption: 'adý' },
+                { dataField: 'price', caption: 'fiyat' },
+                {
+                    dataField: 'change', caption: 'deðiþim',
+                    cellTemplate: function (container, options) {
+                        var data = options.data;
+                        console.log(data, 'data');
+
+                        var change = data.price - data.openPrice;
+                        var percentChange = ((change) / data.openPrice) * 100;
+
+                        var $container = $(container);
+                        var $span = $("<span>").addClass(change > 0 ? 'inc' : 'dec').text(change);
+
+                        var $diff = $("<span>").addClass(percentChange > 0 ? 'inc' : 'dec').text(percentChange.toFixed(2) + "%");
+
+                        var $icon = $("<i>").addClass('fas');
+                        if (change > 0) {
+                            $icon.addClass('fa-arrow-up').addClass('inc');
+                        } else if (change < 0) {
+                            $icon.addClass('fa-arrow-down').addClass('dec');
+                        }
+
+                        $container.append($span).append("&nbsp;&nbsp;&nbsp;&nbsp;").append($diff).append("&ensp;").append($icon);
+                    }
+                },
+                { dataField: 'date', caption: 'tarih' },
+                { dataField: 'openPrice', caption: 'ilk fiyat' },
+            ],
+            onRowPrepared: function (e) {
+                if (e.rowType === 'data') {
+                    var data = e.data;
+                    var change = data.price - data.openPrice;
+                    if (change > 0) {
+                        e.rowElement.addClass('inc-row'); // Artýþ durumunda satýrýn sýnýfýný 'inc-row' olarak ayarla
+                    } else if (change < 0) {
+                        e.rowElement.addClass('dec-row'); // Azalýþ durumunda satýrýn sýnýfýný 'dec-row' olarak ayarla
+                    }
+                }
+            }
         });
 
         connection.on("GetAllProduct", function (data) {
-            console.log(data,'data2')
-
+            console.log(data, 'data2')
             $("#gridContainer").dxDataGrid("instance").option("dataSource", data.result);
         });
     });
 </script>
+
+<style>
+    .inc-row {
+        background-color: #a5d6a7 !important; 
+        color: #000; 
+    }
+
+    .dec-row {
+        background-color: #ef9a9a !important; 
+        color: #000;
+    }
+</style>
+
+
