@@ -87,10 +87,10 @@
         $("#gridContainer").dxDataGrid({
             visible: true,
             columns: [
-                { dataField: 'productName', caption: 'adý' },
-                { dataField: 'price', caption: 'fiyat' },
+                { dataField: 'productName', caption: 'Adý' },
+                { dataField: 'price', caption: 'Güncel Fiyat' },
                 {
-                    dataField: 'change', caption: 'deðiþim',
+                    dataField: 'change', caption: 'Deðiþim',
                     cellTemplate: function (container, options) {
                         var data = options.data;
                         console.log(data, 'data');
@@ -112,9 +112,9 @@
 
                         $container.append($span).append("&nbsp;&nbsp;&nbsp;&nbsp;").append($diff).append("&ensp;").append($icon);
                     }
-                },
-                { dataField: 'date', caption: 'tarih' },
-                { dataField: 'openPrice', caption: 'ilk fiyat' },
+                },  
+                { dataField: 'date', caption: 'Tarih', format: 'dd/MM/yyyy' },
+                { dataField: 'openPrice', caption: 'Ýlk Fiyat' },
             ],
             onRowPrepared: function (e) {
                 if (e.rowType === 'data') {

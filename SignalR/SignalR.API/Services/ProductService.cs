@@ -22,7 +22,7 @@ namespace SignalR.API.Services
             try
             {
                 Random rand = new Random();
-                string[] list = { "Kalem", "Silgi", "Cetvel", "Kağıt", "Klavye", "Mouse", "Bilgisayar" };
+                string[] list = { "Altın", "Dolar", "Euro", "Pound"};
 
                 while (true)
                 {
