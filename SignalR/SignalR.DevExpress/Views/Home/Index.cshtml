@@ -73,77 +73,85 @@
 )
 @*<script src="~/signalr/signalr-client.js"></script>*@
 <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+
 <script>
-    var connection = new signalR.HubConnectionBuilder()
-        .withUrl("https://localhost:7294/MyHub")
-        .build();
+        var connection = new signalR.HubConnectionBuilder()
+            .withUrl("https://localhost:7294/MyHub")
+            .build();
 
-    $(function () {
-        connection.start()
-            .then(function () {
-                connection.invoke("GetData");
-            });
+        $(function () {
+            connection.start()
+                .then(function () {
+                    connection.invoke("GetData");
+                });
 
-        $("#gridContainer").dxDataGrid({
-            visible: true,
-            columns: [
-                { dataField: 'productName', caption: 'Adý' },
-                { dataField: 'price', caption: 'Güncel Fiyat' },
-                {
-                    dataField: 'change', caption: 'Deðiþim',
-                    cellTemplate: function (container, options) {
-                        var data = options.data;
-                        console.log(data, 'data');
+            $("#gridContainer").dxDataGrid({
+                visible: true,
+                columns: [
+                    { dataField: 'productName', caption: 'Adý' },
+                    { dataField: 'price', caption: 'Güncel Fiyat' },
+                    {
+                        dataField: 'change', caption: 'Deðiþim',
+                        cellTemplate: function (container, options) {
+                            var data = options.data;
+                            console.log(data, 'data');
 
-                        var change = data.price - data.openPrice;
-                        var percentChange = ((change) / data.openPrice) * 100;
+                            var change = data.price - data.openPrice;
+                            var percentChange = ((change) / data.openPrice) * 100;
 
-                        var $container = $(container);
-                        var $span = $("<span>").addClass(change > 0 ? 'inc' : 'dec').text(change);
+                            var $container = $(container);
+                            var $span = $("<span>").addClass(change > 0 ? 'inc' : 'dec').text(change);
 
-                        var $diff = $("<span>").addClass(percentChange > 0 ? 'inc' : 'dec').text(percentChange.toFixed(2) + "%");
+                            var $diff = $("<span>").addClass(percentChange > 0 ? 'inc' : 'dec').text(percentChange.toFixed(2) + "%");
 
-                        var $icon = $("<i>").addClass('fas');
-                        if (change > 0) {
-                            $icon.addClass('fa-arrow-up').addClass('inc');
-                        } else if (change < 0) {
-                            $icon.addClass('fa-arrow-down').addClass('dec');
+                            var $icon = $("<i>").addClass('fas');
+                            if (change > 0) {
+                                $icon.addClass('fa-arrow-up').addClass('inc');
+                            } else if (change < 0) {
+                                $icon.addClass('fa-arrow-down').addClass('dec');
+                            }
+
+                            $container.append($span).append("&nbsp;&nbsp;&nbsp;&nbsp;").append($diff).append("&ensp;").append($icon);
                         }
-
-                        $container.append($span).append("&nbsp;&nbsp;&nbsp;&nbsp;").append($diff).append("&ensp;").append($icon);
-                    }
-                },  
-                { dataField: 'date', caption: 'Tarih', format: 'dd/MM/yyyy' },
-                { dataField: 'openPrice', caption: 'Ýlk Fiyat' },
-            ],
-            onRowPrepared: function (e) {
-                if (e.rowType === 'data') {
-                    var data = e.data;
-                    var change = data.price - data.openPrice;
-                    if (change > 0) {
-                        e.rowElement.addClass('inc-row'); // Artýþ durumunda satýrýn sýnýfýný 'inc-row' olarak ayarla
-                    } else if (change < 0) {
-                        e.rowElement.addClass('dec-row'); // Azalýþ durumunda satýrýn sýnýfýný 'dec-row' olarak ayarla
+                    },
+                    {
+                        dataField: 'date',
+                        caption: 'Tarih',
+                        calculateCellValue: function (data) {
+                            return new Date(data.date).toLocaleDateString('tr-TR');
+                        }
+                    },
+                    { dataField: 'openPrice', caption: 'Ýlk Fiyat' },
+                ],
+                onRowPrepared: function (e) {
+                    if (e.rowType === 'data') {
+                        var data = e.data;
+                        var change = data.price - data.openPrice;
+                        if (change > 0) {
+                            e.rowElement.addClass('inc-row'); // Artýþ durumunda satýrýn sýnýfýný 'inc-row' olarak ayarla
+                        } else if (change < 0) {
+                            e.rowElement.addClass('dec-row'); // Azalýþ durumunda satýrýn sýnýfýný 'dec-row' olarak ayarla
+                        }
                     }
                 }
-            }
-        });
+            });
 
-        connection.on("GetAllProduct", function (data) {
-            console.log(data, 'data2')
-            $("#gridContainer").dxDataGrid("instance").option("dataSource", data.result);
+            connection.on("GetAllProduct", function (data) {
+                var grid = $("#gridContainer").dxDataGrid("instance");
+                grid.option("dataSource", data.result);
+                grid.option("visible", true); // Veri yüklendikten sonra grid'i göster
+            });
         });
-    });
-</script>
+    </script>
 
 <style>
     .inc-row {
-        background-color: #a5d6a7 !important; 
-        color: #000; 
+        background-color: #a5d6a7 !important;
+        color: #000;
     }
 
     .dec-row {
-        background-color: #ef9a9a !important; 
+        background-color: #ef9a9a !important;
         color: #000;
     }
 </style>
